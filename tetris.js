@@ -62,6 +62,7 @@ var shapes = {
    	getRandom: function(){
    		var allPieces = [shapes.t, shapes.o, shapes.i, shapes.l, shapes.j, shapes.s, shapes.z];
    		var randomNumber = Math.floor((Math.random() * 7));
+   		//Workaround to clone piece.
    		return JSON.parse(JSON.stringify(allPieces[randomNumber]));
    	}
  };
@@ -128,7 +129,6 @@ var piece = {
 	 			
 	 		}
 	 		if(piece.wallColision(p[i])){
-	 			colision = true;
 	 			return true;
 	 		}	
 	 	}
