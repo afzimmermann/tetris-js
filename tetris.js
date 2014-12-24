@@ -3,6 +3,7 @@ var GO_DOWN_INTERVAL = 35;
 
 var canvas = null;
 var context = null;
+var tetris = null;
 
 
 //Canvas stuff
@@ -68,29 +69,31 @@ var shapes = {
    	getRandom: function(){
    		var allPieces = [shapes.t, shapes.o, shapes.i, shapes.l, shapes.j, shapes.s, shapes.z];
    		var randomNumber = Math.floor((Math.random() * 7));
-   		//Workaround to clone piece.
+   		//Workaround to clone tetris.piece.
    		return JSON.parse(JSON.stringify(allPieces[randomNumber]));
    	}
  };
 
 var reverseMatrix = [[0, -1], [1, 0]];
 
-var piece = {
-	position : null,
-	color: null,
-	goDown: function(){
+function Piece() {
+	var self = this;
+
+	this.position = null;
+	this.color = null;
+	this.goDown = function(){
 		var temp = new Array();
 		for(var i = 0; i<4; i++){
-		 	temp[i] = [piece.position[i][0], (piece.position[i][1] +1)];
+		 	temp[i] = [tetris.piece.position[i][0], (tetris.piece.position[i][1] +1)];
 		}
-		if(!piece.detectColision(temp, 'DOWN')){
+		if(!tetris.piece.detectColision(temp, 'DOWN')){
 			for(var i = 0; i<4; i++){
-				piece.position[i] = temp[i];
+				tetris.piece.position[i] = temp[i];
 			}
 		}
-	},
+	};
 
-	rotate: function(pivot, point){
+	this.rotate = function(pivot, point){
 		pivotVector = new Array();
 		pivotVector[0] = point[0] - pivot [0];
 		pivotVector[1] = point[1] - pivot [1];
@@ -103,31 +106,31 @@ var piece = {
 		rotatedVector[0] = pivot[0]+ transformedVector[0];
 		rotatedVector[1] = pivot[1]+ transformedVector[1];
 		return rotatedVector;
-	},
+	};
 
-	move : function(direction){
+	this.move = function(direction){
 		var temp = new Array();
 		for(var i = 0; i<4; i++){
 			if(direction === 'DOWN'){
-				temp[i] = [piece.position[i][0], (piece.position[i][1] +1)];
+				temp[i] = [tetris.piece.position[i][0], (tetris.piece.position[i][1] +1)];
 			}else if(direction === 'RIGHT'){
-				temp[i] = [(piece.position[i][0] + 1), piece.position[i][1]];
+				temp[i] = [(tetris.piece.position[i][0] + 1), tetris.piece.position[i][1]];
 			}else if (direction === 'LEFT'){
-				temp[i] = [(piece.position[i][0] - 1), piece.position[i][1]];
+				temp[i] = [(tetris.piece.position[i][0] - 1), tetris.piece.position[i][1]];
 			}else if (direction === 'TURN'){
-				temp[i] = piece.rotate(piece.position[1], piece.position[i]);
+				temp[i] = tetris.piece.rotate(tetris.piece.position[1], tetris.piece.position[i]);
 			}
 		}
-		if(!piece.detectColision(temp)){
+		if(!tetris.piece.detectColision(temp)){
 			for(var i = 0; i<4; i++){
-				piece.position[i] = temp[i];
+				tetris.piece.position[i] = temp[i];
 			}
 		}
-	},
+	};
 
-	detectColision : function(p, direction){
+	this.detectColision = function(p, direction){
 	 	for(var i = 0; i<4; i++){
-	 		if(piece.floorColision(p[i])){
+	 		if(tetris.piece.floorColision(p[i])){
 	 			if(direction === 'DOWN'){
 	 				tetris.drawFinalPieceAndCreateNewOne();
 	 			}
@@ -137,14 +140,14 @@ var piece = {
 	 			return true;
 	 			
 	 		}
-	 		if(piece.wallColision(p[i])){
+	 		if(tetris.piece.wallColision(p[i])){
 	 			return true;
 	 		}	
 	 	}
 	 	return false;
-	 },
+	 };
 
-	 floorColision : function(p){
+	 this.floorColision = function(p){
 	 	colision = false;
 	 	if(p[1] > 21){
 	 		colision = true;
@@ -154,25 +157,27 @@ var piece = {
 	 	}
 
 	 	return colision;
-	 },
+	 };
 
-	 wallColision : function(p){
+	 this.wallColision = function(p){
 	 	if(p[0] < 0 || p[0] > 9){
 	 		return true;
 	 	}
 	 	return false;
-	 },
+	 };
 };
 
 
-var tetris = {
-	 points: 0,
-	 gameEnd : false,
-	 timeElapsed : 0,
-	 grid :  new Array(),
-	 activePiecePosition : null,
+function Tetris() {
+	 self=this;
+	 points= 0;
+	 gameEnd = false;
+	 timeElapsed = 0;
+	 this.grid =  new Array();
+	 activePiecePosition = null;
+	 piece = null;
 
-	 addPoints: function(lines){
+	 this.addPoints =  function(lines){
 	 	if(!!lines){
 	 		if(lines.length === 1){
 	 			tetris.points+=100;
@@ -187,25 +192,26 @@ var tetris = {
 	 		tetris.points+=0.25;
 	 	}
 	 	console.log(tetris.points);
-	 },
+	 };
 
-	 initialize : function(grid){
+	 this.initialize = function(){
 	 	var currentShape = shapes.getRandom();
-		piece.position = currentShape.position;
-		piece.color = currentShape.color;
+	 	tetris.piece = new Piece();
+		tetris.piece.position = currentShape.position;
+		tetris.piece.color = currentShape.color;
 	 	for (var x = 0; x <= 9; x++) {
-	 		grid[x] = new Array();
+	 		this.grid[x] = new Array();
 	 		for (var y = 0; y <= 21; y++) {
-	 			grid[x][y] = 0;
+	 			this.dwwwgrid[x][y] = 0;
 	 		};
 	 	};
-	 },
+	 };
 
-	 drawFinalPieceAndCreateNewOne: function(){
-	 	tetris.grid[piece.position[0][0]][piece.position[0][1]] = piece.color;
-	 	tetris.grid[piece.position[1][0]][piece.position[1][1]] = piece.color;
-		tetris.grid[piece.position[2][0]][piece.position[2][1]] = piece.color;
-		tetris.grid[piece.position[3][0]][piece.position[3][1]] = piece.color;
+	 this.drawFinalPieceAndCreateNewOne = function(){
+	 	tetris.grid[tetris.piece.position[0][0]][tetris.piece.position[0][1]] = tetris.piece.color;
+	 	tetris.grid[tetris.piece.position[1][0]][tetris.piece.position[1][1]] = tetris.piece.color;
+		tetris.grid[tetris.piece.position[2][0]][tetris.piece.position[2][1]] = tetris.piece.color;
+		tetris.grid[tetris.piece.position[3][0]][tetris.piece.position[3][1]] = tetris.piece.color;
 
 		var linesToDelete = new Array();
 		for (var y = 0; y <= 21; y++) {
@@ -227,24 +233,24 @@ var tetris = {
 	 		}	 		
 	 	}
 	 	var newShape = shapes.getRandom();
-		piece.position = newShape.position;
-		piece.color = newShape.color;
-	 },
+		tetris.piece.position = newShape.position;
+		tetris.piece.color = newShape.color;
+	 };
 
-	 animatePiece : function(){
-		piece.goDown();
-	 },
+	 this.animatePiece = function(){
+	 	tetris.piece.goDown();
+	 };
 
-	 draw : function(grid){
+	 this.draw = function(){
 	 	for (var x = 0; x <= 9; x++) {
 	 		for (var y = 0; y <= 21; y++) {
-	 			output.draw(x, y, grid[x][y]);
+	 			output.draw(x, y, this.grid[x][y]);
 	 		}
 	 	}
-	 	output.draw(piece.position[0][0], piece.position[0][1], piece.color);
-	 	output.draw(piece.position[1][0], piece.position[1][1], piece.color);
-	 	output.draw(piece.position[2][0], piece.position[2][1], piece.color);
-	 	output.draw(piece.position[3][0], piece.position[3][1], piece.color);
+	 	output.draw(tetris.piece.position[0][0], tetris.piece.position[0][1], tetris.piece.color);
+	 	output.draw(tetris.piece.position[1][0], tetris.piece.position[1][1], tetris.piece.color);
+	 	output.draw(tetris.piece.position[2][0], tetris.piece.position[2][1], tetris.piece.color);
+	 	output.draw(tetris.piece.position[3][0], tetris.piece.position[3][1], tetris.piece.color);
 	 }
 };
 
@@ -271,7 +277,8 @@ var output = {
 window.onload = function(){
 	canvas  = document.getElementById("output");
 	context = canvas.getContext('2d');
-	tetris.initialize(tetris.grid);
+	tetris = new Tetris();
+	tetris.initialize();
 	animate(canvas, context, new Date().getTime());
 }
 
@@ -303,9 +310,9 @@ window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, fa
 function smoothKeyHandle() {
   if (Key.isDown(Key.UP) > 0){
   		if(Key._pressed[Key.UP] === 1){
-  			piece.move('TURN');	
+  			tetris.piece.move('TURN');	
   		}else if(Key._pressed[Key.UP] > 10){
-  			piece.move('TURN');
+  			tetris.piece.move('TURN');
   			Key._pressed[Key.UP] = 1;
   		}
 	Key._pressed[Key.UP]++;
@@ -313,9 +320,9 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.LEFT) > 0){
   		if(Key._pressed[Key.LEFT] === 1){
-  			piece.move('LEFT');	
+  			tetris.piece.move('LEFT');	
   		}else if(Key._pressed[Key.LEFT] > 10){
-  			piece.move('LEFT');
+  			tetris.piece.move('LEFT');
   			Key._pressed[Key.LEFT] = 1;
   		}
 	Key._pressed[Key.LEFT]++;
@@ -323,9 +330,9 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.DOWN) > 0){
   		if(Key._pressed[Key.DOWN] === 1){
-  			piece.move('DOWN');	
+  			tetris.piece.move('DOWN');	
   		}else if(Key._pressed[Key.DOWN] > 3){
-  			piece.move('DOWN');
+  			tetris.piece.move('DOWN');
   			Key._pressed[Key.DOWN] = 1;
   		}
 	Key._pressed[Key.DOWN]++;
@@ -333,9 +340,9 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.RIGHT) > 0){
   		if(Key._pressed[Key.RIGHT] === 1){
-  			piece.move('RIGHT');	
+  			tetris.piece.move('RIGHT');	
   		}else if(Key._pressed[Key.RIGHT] > 10){
-  			piece.move('RIGHT');
+  			tetris.piece.move('RIGHT');
   			Key._pressed[Key.RIGHT] = 1;
   		}
 	Key._pressed[Key.RIGHT]++;
@@ -346,16 +353,16 @@ function smoothKeyHandle() {
 document.onkeydown = function(e){
 	switch(e.keyCode){
 		case 65 : 
-			piece.move('LEFT');
+			tetris.piece.move('LEFT');
 			break;
 		case 68 : 
-			piece.move('RIGHT');
+			tetris.piece.move('RIGHT');
 			break;
 		case 87 : 
-			piece.move('TURN');
+			tetris.piece.move('TURN');
 			break;
 		case 83 : 
-			piece.move('DOWN');
+			tetris.piece.move('DOWN');
 			break;
 		default:
 			return;
