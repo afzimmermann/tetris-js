@@ -15,16 +15,22 @@ window.requestAnimFrame = (function(callback) {
 
 function animate(canvas, context) {
     // clear
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    tetris.draw(tetris.grid);
-    // request new frame
-    requestAnimFrame(function() {
-      animate(canvas, context);
-      tetris.timeElapsed++;
-      if(tetris.timeElapsed % GO_DOWN_INTERVAL === 0){
-      	tetris.animatePiece();
-      }
-    });
+    if(tetris.gameEnd){
+    	alert("Score: "+ tetris.points);
+    }else{
+ 		context.clearRect(0, 0, canvas.width, canvas.height);
+    	tetris.draw(tetris.grid);
+	    // request new frame
+	    requestAnimFrame(function() {
+   		smoothKeyHandle();	
+	      animate(canvas, context);
+	      tetris.timeElapsed++;
+	      if(tetris.timeElapsed % GO_DOWN_INTERVAL === 0){
+	      	tetris.animatePiece();
+	      }
+	    });   	
+    }
+    
 };
 
 //END CANVAS
@@ -125,6 +131,9 @@ var piece = {
 	 			if(direction === 'DOWN'){
 	 				tetris.drawFinalPieceAndCreateNewOne();
 	 			}
+	 			if(p[i][1] < 2){
+	 				tetris.gameEnd = true;
+	 			}
 	 			return true;
 	 			
 	 		}
@@ -157,9 +166,28 @@ var piece = {
 
 
 var tetris = {
+	 points: 0,
+	 gameEnd : false,
 	 timeElapsed : 0,
 	 grid :  new Array(),
 	 activePiecePosition : null,
+
+	 addPoints: function(lines){
+	 	if(!!lines){
+	 		if(lines.length === 1){
+	 			tetris.points+=100;
+	 		}else if(lines.length === 2){
+	 			tetris.points+=300;
+	 		}else if(lines.length === 3){
+	 			tetris.points+=600;
+	 		}else if(lines.length === 4){
+	 			tetris.points+=1000;
+	 		}
+	 	}else{
+	 		tetris.points+=0.25;
+	 	}
+	 	console.log(tetris.points);
+	 },
 
 	 initialize : function(grid){
 	 	var currentShape = shapes.getRandom();
@@ -190,6 +218,7 @@ var tetris = {
 	 			linesToDelete.push(y);
 	 		}
 	 	};
+	 	tetris.addPoints(linesToDelete);
 	 	for(var i = 0; i< linesToDelete.length; i++){
 	 		var lineToDelete = linesToDelete[i];
 	 		for (var x = 0; x <= 9; x++) {
@@ -245,6 +274,74 @@ window.onload = function(){
 	tetris.initialize(tetris.grid);
 	animate(canvas, context, new Date().getTime());
 }
+
+var Key = {
+  _pressed: {},
+
+  LEFT: 37,
+  UP: 38,
+  RIGHT: 39,
+  DOWN: 40,
+  
+  isDown: function(keyCode) {
+     return this._pressed[keyCode];
+  },
+  
+  onKeydown: function(event) {
+     this._pressed[event.keyCode] = 1;
+  },
+  
+  onKeyup: function(event) {
+    delete this._pressed[event.keyCode];
+  }
+};
+
+window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
+window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
+
+
+function smoothKeyHandle() {
+  if (Key.isDown(Key.UP) > 0){
+  		if(Key._pressed[Key.UP] === 1){
+  			piece.move('TURN');	
+  		}else if(Key._pressed[Key.UP] > 10){
+  			piece.move('TURN');
+  			Key._pressed[Key.UP] = 1;
+  		}
+	Key._pressed[Key.UP]++;
+  		
+  }
+  if (Key.isDown(Key.LEFT) > 0){
+  		if(Key._pressed[Key.LEFT] === 1){
+  			piece.move('LEFT');	
+  		}else if(Key._pressed[Key.LEFT] > 10){
+  			piece.move('LEFT');
+  			Key._pressed[Key.LEFT] = 1;
+  		}
+	Key._pressed[Key.LEFT]++;
+  		
+  }
+  if (Key.isDown(Key.DOWN) > 0){
+  		if(Key._pressed[Key.DOWN] === 1){
+  			piece.move('DOWN');	
+  		}else if(Key._pressed[Key.DOWN] > 3){
+  			piece.move('DOWN');
+  			Key._pressed[Key.DOWN] = 1;
+  		}
+	Key._pressed[Key.DOWN]++;
+  		
+  }
+  if (Key.isDown(Key.RIGHT) > 0){
+  		if(Key._pressed[Key.RIGHT] === 1){
+  			piece.move('RIGHT');	
+  		}else if(Key._pressed[Key.RIGHT] > 10){
+  			piece.move('RIGHT');
+  			Key._pressed[Key.RIGHT] = 1;
+  		}
+	Key._pressed[Key.RIGHT]++;
+  		
+  }
+};
 
 document.onkeydown = function(e){
 	switch(e.keyCode){
