@@ -1,40 +1,6 @@
 var BLOCK_SIZE = 25;
 var GO_DOWN_INTERVAL = 35;
 
-var canvas = null;
-var context = null;
-var tetris = null;
-
-
-//Canvas stuff
-window.requestAnimFrame = (function(callback) {
-        return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-        function(callback) {
-          window.setTimeout(callback, 1000 / 60);
-        };
-})();
-
-function animate(canvas, context) {
-    // clear
-    if(tetris.gameEnd){
-    	alert("Score: "+ tetris.points);
-    }else{
- 		context.clearRect(0, 0, canvas.width, canvas.height);
-    	tetris.draw(tetris.grid);
-	    // request new frame
-	    requestAnimFrame(function() {
-   		smoothKeyHandle();	
-	      animate(canvas, context);
-	      tetris.timeElapsed++;
-	      if(tetris.timeElapsed % GO_DOWN_INTERVAL === 0){
-	      	tetris.animatePiece();
-	      }
-	    });   	
-    }
-    
-};
-
-//END CANVAS
 colorMap = ['', 'purple', 'yellow', '00FFFF', 'orange', 'blue', 'green', 'red'];
 var shapes = {
    	t : {
@@ -81,17 +47,6 @@ function Piece() {
 
 	this.position = null;
 	this.color = null;
-	this.goDown = function(){
-		var temp = new Array();
-		for(var i = 0; i<4; i++){
-		 	temp[i] = [tetris.piece.position[i][0], (tetris.piece.position[i][1] +1)];
-		}
-		if(!tetris.piece.detectColision(temp, 'DOWN')){
-			for(var i = 0; i<4; i++){
-				tetris.piece.position[i] = temp[i];
-			}
-		}
-	};
 
 	this.rotate = function(pivot, point){
 		pivotVector = new Array();
@@ -107,40 +62,53 @@ function Piece() {
 		rotatedVector[1] = pivot[1]+ transformedVector[1];
 		return rotatedVector;
 	};
+	
+};
 
-	this.move = function(direction){
+
+function Tetris() {
+	 self=this;
+	 this.points= 0;
+	 this.gameEnd = false;
+	 this.timeElapsed = 0;
+	 this.grid =  new Array();
+	 this.activePiecePosition = null;
+	 this.piece = null;
+	 this.output = null;
+
+	 this.move = function(direction){
 		var temp = new Array();
 		for(var i = 0; i<4; i++){
 			if(direction === 'DOWN'){
-				temp[i] = [tetris.piece.position[i][0], (tetris.piece.position[i][1] +1)];
+				temp[i] = [this.piece.position[i][0], (this.piece.position[i][1] +1)];
 			}else if(direction === 'RIGHT'){
-				temp[i] = [(tetris.piece.position[i][0] + 1), tetris.piece.position[i][1]];
+				temp[i] = [(this.piece.position[i][0] + 1), this.piece.position[i][1]];
 			}else if (direction === 'LEFT'){
-				temp[i] = [(tetris.piece.position[i][0] - 1), tetris.piece.position[i][1]];
+				temp[i] = [(this.piece.position[i][0] - 1), this.piece.position[i][1]];
 			}else if (direction === 'TURN'){
-				temp[i] = tetris.piece.rotate(tetris.piece.position[1], tetris.piece.position[i]);
+				temp[i] = this.piece.rotate(this.piece.position[1], this.piece.position[i]);
 			}
 		}
-		if(!tetris.piece.detectColision(temp)){
+		if(!this.detectColision(temp)){
 			for(var i = 0; i<4; i++){
-				tetris.piece.position[i] = temp[i];
+				this.piece.position[i] = temp[i];
 			}
 		}
 	};
 
 	this.detectColision = function(p, direction){
 	 	for(var i = 0; i<4; i++){
-	 		if(tetris.piece.floorColision(p[i])){
+	 		if(this.floorColision(p[i])){
 	 			if(direction === 'DOWN'){
-	 				tetris.drawFinalPieceAndCreateNewOne();
+	 				this.drawFinalPieceAndCreateNewOne();
 	 			}
 	 			if(p[i][1] < 2){
-	 				tetris.gameEnd = true;
+	 				this.gameEnd = true;
 	 			}
 	 			return true;
 	 			
 	 		}
-	 		if(tetris.piece.wallColision(p[i])){
+	 		if(this.wallColision(p[i])){
 	 			return true;
 	 		}	
 	 	}
@@ -152,7 +120,7 @@ function Piece() {
 	 	if(p[1] > 21){
 	 		colision = true;
 	 	}
-	 	if(tetris.grid[p[0]] && tetris.grid[p[0]][p[1]] > 0){
+	 	if(this.grid[p[0]] && this.grid[p[0]][p[1]] > 0){
 	 		colision = true;
 	 	}
 
@@ -165,97 +133,98 @@ function Piece() {
 	 	}
 	 	return false;
 	 };
-};
-
-
-function Tetris() {
-	 self=this;
-	 points= 0;
-	 gameEnd = false;
-	 timeElapsed = 0;
-	 this.grid =  new Array();
-	 activePiecePosition = null;
-	 piece = null;
 
 	 this.addPoints =  function(lines){
 	 	if(!!lines){
 	 		if(lines.length === 1){
-	 			tetris.points+=100;
+	 			this.points+=100;
 	 		}else if(lines.length === 2){
-	 			tetris.points+=300;
+	 			this.points+=300;
 	 		}else if(lines.length === 3){
-	 			tetris.points+=600;
+	 			this.points+=600;
 	 		}else if(lines.length === 4){
-	 			tetris.points+=1000;
+	 			this.points+=1000;
 	 		}
 	 	}else{
-	 		tetris.points+=0.25;
+	 		this.points+=0.25;
 	 	}
-	 	console.log(tetris.points);
+	 	console.log(this.points);
 	 };
+
+ 	this.goDown = function(){
+		var temp = new Array();
+		for(var i = 0; i<4; i++){
+		 	temp[i] = [this.piece.position[i][0], (this.piece.position[i][1] +1)];
+		}
+		if(!this.detectColision(temp, 'DOWN')){
+			for(var i = 0; i<4; i++){
+				this.piece.position[i] = temp[i];
+			}
+		}
+	};
 
 	 this.initialize = function(){
 	 	var currentShape = shapes.getRandom();
-	 	tetris.piece = new Piece();
-		tetris.piece.position = currentShape.position;
-		tetris.piece.color = currentShape.color;
+	 	this.piece = new Piece();
+		this.piece.position = currentShape.position;
+		this.piece.color = currentShape.color;
 	 	for (var x = 0; x <= 9; x++) {
 	 		this.grid[x] = new Array();
 	 		for (var y = 0; y <= 21; y++) {
-	 			this.dwwwgrid[x][y] = 0;
+	 			this.grid[x][y] = 0;
 	 		};
 	 	};
 	 };
 
 	 this.drawFinalPieceAndCreateNewOne = function(){
-	 	tetris.grid[tetris.piece.position[0][0]][tetris.piece.position[0][1]] = tetris.piece.color;
-	 	tetris.grid[tetris.piece.position[1][0]][tetris.piece.position[1][1]] = tetris.piece.color;
-		tetris.grid[tetris.piece.position[2][0]][tetris.piece.position[2][1]] = tetris.piece.color;
-		tetris.grid[tetris.piece.position[3][0]][tetris.piece.position[3][1]] = tetris.piece.color;
+	 	this.grid[this.piece.position[0][0]][this.piece.position[0][1]] = this.piece.color;
+	 	this.grid[this.piece.position[1][0]][this.piece.position[1][1]] = this.piece.color;
+		this.grid[this.piece.position[2][0]][this.piece.position[2][1]] = this.piece.color;
+		this.grid[this.piece.position[3][0]][this.piece.position[3][1]] = this.piece.color;
 
 		var linesToDelete = new Array();
 		for (var y = 0; y <= 21; y++) {
 			deleteLine = true;
 			for (var x = 0; x <= 9; x++) {	 		
-	 			var currentLine = tetris.grid[x][y] > 0 ? true : false;
+	 			var currentLine = this.grid[x][y] > 0 ? true : false;
 	 			deleteLine = deleteLine && currentLine;
 	 		}
 	 		if(deleteLine){
 	 			linesToDelete.push(y);
 	 		}
 	 	};
-	 	tetris.addPoints(linesToDelete);
+	 	this.addPoints(linesToDelete);
 	 	for(var i = 0; i< linesToDelete.length; i++){
 	 		var lineToDelete = linesToDelete[i];
 	 		for (var x = 0; x <= 9; x++) {
-	 			tetris.grid[x].splice(lineToDelete, 1);
-	 			tetris.grid[x].splice(0, 0, 0);
+	 			this.grid[x].splice(lineToDelete, 1);
+	 			this.grid[x].splice(0, 0, 0);
 	 		}	 		
 	 	}
 	 	var newShape = shapes.getRandom();
-		tetris.piece.position = newShape.position;
-		tetris.piece.color = newShape.color;
+		this.piece.position = newShape.position;
+		this.piece.color = newShape.color;
 	 };
 
 	 this.animatePiece = function(){
-	 	tetris.piece.goDown();
+	 	this.goDown();
 	 };
 
 	 this.draw = function(){
 	 	for (var x = 0; x <= 9; x++) {
 	 		for (var y = 0; y <= 21; y++) {
-	 			output.draw(x, y, this.grid[x][y]);
+	 			this.output.draw(x, y, this.grid[x][y]);
 	 		}
 	 	}
-	 	output.draw(tetris.piece.position[0][0], tetris.piece.position[0][1], tetris.piece.color);
-	 	output.draw(tetris.piece.position[1][0], tetris.piece.position[1][1], tetris.piece.color);
-	 	output.draw(tetris.piece.position[2][0], tetris.piece.position[2][1], tetris.piece.color);
-	 	output.draw(tetris.piece.position[3][0], tetris.piece.position[3][1], tetris.piece.color);
+	 	this.output.draw(this.piece.position[0][0], this.piece.position[0][1], this.piece.color);
+	 	this.output.draw(this.piece.position[1][0], this.piece.position[1][1], this.piece.color);
+	 	this.output.draw(this.piece.position[2][0], this.piece.position[2][1], this.piece.color);
+	 	this.output.draw(this.piece.position[3][0], this.piece.position[3][1], this.piece.color);
 	 }
 };
 
-var output = {
-	draw : function(x, y, color){
+function Output(context){
+	this.draw = function(x, y, color){
 		var realx = x * BLOCK_SIZE;
 		var realy = y * BLOCK_SIZE;
 		context.beginPath();
@@ -273,98 +242,3 @@ var output = {
 	}
 };
 
-
-window.onload = function(){
-	canvas  = document.getElementById("output");
-	context = canvas.getContext('2d');
-	tetris = new Tetris();
-	tetris.initialize();
-	animate(canvas, context, new Date().getTime());
-}
-
-var Key = {
-  _pressed: {},
-
-  LEFT: 37,
-  UP: 38,
-  RIGHT: 39,
-  DOWN: 40,
-  
-  isDown: function(keyCode) {
-     return this._pressed[keyCode];
-  },
-  
-  onKeydown: function(event) {
-     this._pressed[event.keyCode] = 1;
-  },
-  
-  onKeyup: function(event) {
-    delete this._pressed[event.keyCode];
-  }
-};
-
-window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
-window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
-
-
-function smoothKeyHandle() {
-  if (Key.isDown(Key.UP) > 0){
-  		if(Key._pressed[Key.UP] === 1){
-  			tetris.piece.move('TURN');	
-  		}else if(Key._pressed[Key.UP] > 10){
-  			tetris.piece.move('TURN');
-  			Key._pressed[Key.UP] = 1;
-  		}
-	Key._pressed[Key.UP]++;
-  		
-  }
-  if (Key.isDown(Key.LEFT) > 0){
-  		if(Key._pressed[Key.LEFT] === 1){
-  			tetris.piece.move('LEFT');	
-  		}else if(Key._pressed[Key.LEFT] > 10){
-  			tetris.piece.move('LEFT');
-  			Key._pressed[Key.LEFT] = 1;
-  		}
-	Key._pressed[Key.LEFT]++;
-  		
-  }
-  if (Key.isDown(Key.DOWN) > 0){
-  		if(Key._pressed[Key.DOWN] === 1){
-  			tetris.piece.move('DOWN');	
-  		}else if(Key._pressed[Key.DOWN] > 3){
-  			tetris.piece.move('DOWN');
-  			Key._pressed[Key.DOWN] = 1;
-  		}
-	Key._pressed[Key.DOWN]++;
-  		
-  }
-  if (Key.isDown(Key.RIGHT) > 0){
-  		if(Key._pressed[Key.RIGHT] === 1){
-  			tetris.piece.move('RIGHT');	
-  		}else if(Key._pressed[Key.RIGHT] > 10){
-  			tetris.piece.move('RIGHT');
-  			Key._pressed[Key.RIGHT] = 1;
-  		}
-	Key._pressed[Key.RIGHT]++;
-  		
-  }
-};
-
-document.onkeydown = function(e){
-	switch(e.keyCode){
-		case 65 : 
-			tetris.piece.move('LEFT');
-			break;
-		case 68 : 
-			tetris.piece.move('RIGHT');
-			break;
-		case 87 : 
-			tetris.piece.move('TURN');
-			break;
-		case 83 : 
-			tetris.piece.move('DOWN');
-			break;
-		default:
-			return;
-	}
-}
