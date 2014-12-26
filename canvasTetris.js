@@ -1,9 +1,14 @@
-var canvas = null;
-var context = null;
-var tetris = null;
-var tetris2 = null;
-var canvas2 = null;
-var context2 = null;
+var allGames = new Array();
+var timeElapsed = 0;
+
+function TetrisGame(outputName, playerName) {
+  this.canvas  = document.getElementById(outputName);
+  this.context = this.canvas.getContext('2d');
+  this.tetris = new Tetris(playerName);
+
+  this.tetris.output = new Output(this.context);
+  this.tetris.initialize();
+};
 
 
 //Canvas stuff
@@ -14,25 +19,33 @@ window.requestAnimFrame = (function(callback) {
         };
 })();
 
-function animate(canvas, context, canvas2, context2) {
-    // clear
-    if(tetris.gameEnd){
-    	alert("Score: "+ tetris.points);
-    }else{
- 		context.clearRect(0, 0, canvas.width, canvas.height);
- 		context2.clearRect(0, 0, canvas2.width, canvas2.height);
-    	tetris.draw();
-    	tetris2.draw();
-	    // request new frame
-	    requestAnimFrame(function() {
-   		smoothKeyHandle();	
-	      animate(canvas, context, canvas2, context2);
-	      tetris.timeElapsed++;
-	      if(tetris.timeElapsed % GO_DOWN_INTERVAL === 0){
-	      	tetris.animatePiece();
-	      	tetris2.animatePiece();
-	      }
-	    });   	
+function animate(allGames) {
+    var endGame = false;
+    for(var i = 0; i < allGames.length; i++){
+       var tetrisGame = allGames[i];
+
+      if(tetrisGame.tetris.gameEnd){
+        endGame = tetrisGame.tetris.gameEnd;
+        alert("Score: "+ tetrisGame.tetris.points);
+      }else{
+        tetrisGame.context.clearRect(0, 0, tetrisGame.canvas.width, tetrisGame.canvas.height);
+        tetrisGame.tetris.draw();
+      }
+    }
+
+    if(!endGame){
+      // request new frame
+        requestAnimFrame(function() {
+        smoothKeyHandle();  
+          animate(allGames);
+          timeElapsed++;
+          if(timeElapsed % GO_DOWN_INTERVAL === 0){
+             for(var i = 0; i < allGames.length; i++){
+                var tetrisGame = allGames[i];
+                tetrisGame.tetris.animatePiece();
+            }
+          }
+      });  
     }
     
 };
@@ -40,20 +53,11 @@ function animate(canvas, context, canvas2, context2) {
 //END CANVAS
 
 window.onload = function(){
-	canvas  = document.getElementById("output");
-	context = canvas.getContext('2d');
-	tetris = new Tetris();
-	tetris.output = new Output(context);
-	tetris.initialize();
 
-	canvas2  = document.getElementById("output2");
-	context2 = canvas2.getContext('2d');
-	tetris2 = new Tetris();
-	tetris2.output = new Output(context2);
-	tetris2.initialize();
-
-
-	animate(canvas, context, canvas2, context2, new Date().getTime());
+  allGames.push(new TetrisGame('output', 'player1'));
+  allGames.push(new TetrisGame('output2', 'player2'));
+	
+	animate(allGames);
 }
 
 var Key = {
@@ -63,6 +67,11 @@ var Key = {
   UP: 38,
   RIGHT: 39,
   DOWN: 40,
+
+  LEFT_p2: 65,
+  UP_p2: 87,
+  RIGHT_p2: 68,
+  DOWN_p2: 83,
   
   isDown: function(keyCode) {
      return this._pressed[keyCode];
@@ -82,11 +91,13 @@ window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, fa
 
 
 function smoothKeyHandle() {
+
+  //P1
   if (Key.isDown(Key.UP) > 0){
   		if(Key._pressed[Key.UP] === 1){
-  			tetris.move('TURN');	
+  			allGames[0].tetris.move('TURN');	
   		}else if(Key._pressed[Key.UP] > 10){
-  			tetris.move('TURN');
+  			allGames[0].tetris.move('TURN');
   			Key._pressed[Key.UP] = 1;
   		}
 	Key._pressed[Key.UP]++;
@@ -94,9 +105,9 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.LEFT) > 0){
   		if(Key._pressed[Key.LEFT] === 1){
-  			tetris.move('LEFT');	
+  			allGames[0].tetris.move('LEFT');	
   		}else if(Key._pressed[Key.LEFT] > 10){
-  			tetris.move('LEFT');
+  			allGames[0].tetris.move('LEFT');
   			Key._pressed[Key.LEFT] = 1;
   		}
 	Key._pressed[Key.LEFT]++;
@@ -104,9 +115,9 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.DOWN) > 0){
   		if(Key._pressed[Key.DOWN] === 1){
-  			tetris.move('DOWN');	
+  			allGames[0].tetris.move('DOWN');	
   		}else if(Key._pressed[Key.DOWN] > 3){
-  			tetris.move('DOWN');
+  			allGames[0].tetris.move('DOWN');
   			Key._pressed[Key.DOWN] = 1;
   		}
 	Key._pressed[Key.DOWN]++;
@@ -114,31 +125,54 @@ function smoothKeyHandle() {
   }
   if (Key.isDown(Key.RIGHT) > 0){
   		if(Key._pressed[Key.RIGHT] === 1){
-  			tetris.move('RIGHT');	
+  			allGames[0].tetris.move('RIGHT');	
   		}else if(Key._pressed[Key.RIGHT] > 10){
-  			tetris.move('RIGHT');
+  			allGames[0].tetris.move('RIGHT');
   			Key._pressed[Key.RIGHT] = 1;
   		}
 	Key._pressed[Key.RIGHT]++;
-  		
   }
-};
 
-document.onkeydown = function(e){
-	switch(e.keyCode){
-		case 65 : 
-			tetris.move('LEFT');
-			break;
-		case 68 : 
-			tetris.move('RIGHT');
-			break;
-		case 87 : 
-			tetris.move('TURN');
-			break;
-		case 83 : 
-			tetris.move('DOWN');
-			break;
-		default:
-			return;
-	}
-}
+  //P2
+
+if (Key.isDown(Key.UP_p2) > 0){
+      if(Key._pressed[Key.UP_p2] === 1){
+        allGames[1].tetris.move('TURN');  
+      }else if(Key._pressed[Key.UP_p2] > 10){
+        allGames[1].tetris.move('TURN');
+        Key._pressed[Key.UP_p2] = 1;
+      }
+  Key._pressed[Key.UP_p2]++;
+      
+  }
+  if (Key.isDown(Key.LEFT_p2) > 0){
+      if(Key._pressed[Key.LEFT_p2] === 1){
+        allGames[1].tetris.move('LEFT');  
+      }else if(Key._pressed[Key.LEFT_p2] > 10){
+        allGames[1].tetris.move('LEFT');
+        Key._pressed[Key.LEFT_p2] = 1;
+      }
+  Key._pressed[Key.LEFT_p2]++;
+      
+  }
+  if (Key.isDown(Key.DOWN_p2) > 0){
+      if(Key._pressed[Key.DOWN_p2] === 1){
+        allGames[1].tetris.move('DOWN');  
+      }else if(Key._pressed[Key.DOWN_p2] > 3){
+        allGames[1].tetris.move('DOWN');
+        Key._pressed[Key.DOWN_p2] = 1;
+      }
+  Key._pressed[Key.DOWN_p2]++;
+      
+  }
+  if (Key.isDown(Key.RIGHT_p2) > 0){
+      if(Key._pressed[Key.RIGHT_p2] === 1){
+        allGames[1].tetris.move('RIGHT'); 
+      }else if(Key._pressed[Key.RIGHT_p2] > 10){
+        allGames[1].tetris.move('RIGHT');
+        Key._pressed[Key.RIGHT_p2] = 1;
+      }
+  Key._pressed[Key.RIGHT_p2]++;
+  }
+
+};

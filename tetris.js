@@ -1,7 +1,8 @@
 var BLOCK_SIZE = 25;
 var GO_DOWN_INTERVAL = 35;
+var reverseMatrix = [[0, -1], [1, 0]];
+var colorMap = ['', 'purple', 'yellow', '00FFFF', 'orange', 'blue', 'green', 'red', 'brown'];
 
-colorMap = ['', 'purple', 'yellow', '00FFFF', 'orange', 'blue', 'green', 'red'];
 var shapes = {
    	t : {
    		position : [[4,0], [4,1], [3,1], [5,1]],
@@ -40,11 +41,7 @@ var shapes = {
    	}
  };
 
-var reverseMatrix = [[0, -1], [1, 0]];
-
 function Piece() {
-	var self = this;
-
 	this.position = null;
 	this.color = null;
 
@@ -66,15 +63,14 @@ function Piece() {
 };
 
 
-function Tetris() {
-	 self=this;
+function Tetris(playerName) {
 	 this.points= 0;
 	 this.gameEnd = false;
-	 this.timeElapsed = 0;
 	 this.grid =  new Array();
 	 this.activePiecePosition = null;
 	 this.piece = null;
 	 this.output = null;
+	 this.player = playerName;
 
 	 this.move = function(direction){
 		var temp = new Array();
@@ -89,7 +85,7 @@ function Tetris() {
 				temp[i] = this.piece.rotate(this.piece.position[1], this.piece.position[i]);
 			}
 		}
-		if(!this.detectColision(temp)){
+		if(!this.detectColision(temp, direction)){
 			for(var i = 0; i<4; i++){
 				this.piece.position[i] = temp[i];
 			}
@@ -176,6 +172,29 @@ function Tetris() {
 	 	};
 	 };
 
+	 this.sendLineOtherPlayers = function(fullLines){
+	 	if(fullLines > 1){
+	 		var playerGrid = null;
+	 		if(this.player === 'player1'){
+	 			playerGrid = allGames[1].tetris.grid;
+	 		}else{
+	 			playerGrid = allGames[0].tetris.grid;
+	 		}
+	 		var randomEmptyLine = Math.floor((Math.random() * 10));
+	 		var linesToInsert = (fullLines == 4 ? fullLines: fullLines-1);
+	 		for (var x = 0; x <= 9; x++) {
+	 			for(var add = 0; add < linesToInsert; add++){
+	 				playerGrid[x].shift();
+	 				if(randomEmptyLine === x){
+				 		playerGrid[x].splice(21, 0, 0);
+	 				}else{
+	 					playerGrid[x].splice(21, 0, 8);	
+	 				}
+	 			}
+	 		}
+	 	}
+	 };
+
 	 this.drawFinalPieceAndCreateNewOne = function(){
 	 	this.grid[this.piece.position[0][0]][this.piece.position[0][1]] = this.piece.color;
 	 	this.grid[this.piece.position[1][0]][this.piece.position[1][1]] = this.piece.color;
@@ -193,6 +212,7 @@ function Tetris() {
 	 			linesToDelete.push(y);
 	 		}
 	 	};
+	 	this.sendLineOtherPlayers(linesToDelete.length);
 	 	this.addPoints(linesToDelete);
 	 	for(var i = 0; i< linesToDelete.length; i++){
 	 		var lineToDelete = linesToDelete[i];
