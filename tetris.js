@@ -32,13 +32,6 @@ var shapes = {
    		position: [[5,0], [4,1], [5,1], [4,2]],
    		color: 7	
    	} ,
-
-   	getRandom: function(){
-   		var allPieces = [shapes.t, shapes.o, shapes.i, shapes.l, shapes.j, shapes.s, shapes.z];
-   		var randomNumber = Math.floor((Math.random() * 7));
-   		//Workaround to clone tetris.piece.
-   		return JSON.parse(JSON.stringify(allPieces[randomNumber]));
-   	}
  };
 
 function Piece() {
@@ -59,7 +52,17 @@ function Piece() {
 		rotatedVector[1] = pivot[1]+ transformedVector[1];
 		return rotatedVector;
 	};
-	
+
+	 this.getRandom = function(){
+   		var allPieces = [shapes.t, shapes.o, shapes.i, shapes.l, shapes.j, shapes.s, shapes.z];
+   		var randomNumber = Math.floor((Math.random() * 7));
+   		//Workaround to clone tetris.piece.
+   		return JSON.parse(JSON.stringify(allPieces[randomNumber]));
+   	};
+
+   	var piece = this.getRandom();
+	this.position = piece.position;
+	this.color = piece.color;
 };
 
 
@@ -69,6 +72,7 @@ function Tetris(playerName) {
 	 this.grid =  new Array();
 	 this.activePiecePosition = null;
 	 this.piece = null;
+	 this.nextPiece = null;
 	 this.output = null;
 	 this.player = playerName;
 
@@ -160,10 +164,8 @@ function Tetris(playerName) {
 	};
 
 	 this.initialize = function(){
-	 	var currentShape = shapes.getRandom();
 	 	this.piece = new Piece();
-		this.piece.position = currentShape.position;
-		this.piece.color = currentShape.color;
+	 	this.nextPiece = new Piece();
 	 	for (var x = 0; x <= 9; x++) {
 	 		this.grid[x] = new Array();
 	 		for (var y = 0; y <= 21; y++) {
@@ -221,9 +223,8 @@ function Tetris(playerName) {
 	 			this.grid[x].splice(0, 0, 0);
 	 		}	 		
 	 	}
-	 	var newShape = shapes.getRandom();
-		this.piece.position = newShape.position;
-		this.piece.color = newShape.color;
+		this.piece = this.nextPiece;
+		this.nextPiece = new Piece();
 	 };
 
 	 this.animatePiece = function(){
@@ -240,13 +241,20 @@ function Tetris(playerName) {
 	 	this.output.draw(this.piece.position[1][0], this.piece.position[1][1], this.piece.color);
 	 	this.output.draw(this.piece.position[2][0], this.piece.position[2][1], this.piece.color);
 	 	this.output.draw(this.piece.position[3][0], this.piece.position[3][1], this.piece.color);
+
+
+	 	this.output.drawBorder();
+	 	this.output.draw(this.nextPiece.position[0][0], this.nextPiece.position[0][1]+23, this.nextPiece.color);
+	 	this.output.draw(this.nextPiece.position[1][0], this.nextPiece.position[1][1]+23, this.nextPiece.color);
+	 	this.output.draw(this.nextPiece.position[2][0], this.nextPiece.position[2][1]+23, this.nextPiece.color);
+	 	this.output.draw(this.nextPiece.position[3][0], this.nextPiece.position[3][1]+23, this.nextPiece.color);
 	 }
 };
 
 function Output(context){
 	this.draw = function(x, y, color){
-		var realx = x * BLOCK_SIZE;
-		var realy = y * BLOCK_SIZE;
+		var realx = (x * BLOCK_SIZE);
+		var realy = (y * BLOCK_SIZE)  - 2 * BLOCK_SIZE;
 		context.beginPath();
 		context.rect(realx, realy, BLOCK_SIZE, BLOCK_SIZE);
 		if(color > 0){
@@ -258,6 +266,14 @@ function Output(context){
 		}
 	    context.fill();
 	    context.strokeStyle = 'black';
+	    context.stroke();
+	}
+
+	this.drawBorder = function(){
+		context.beginPath();
+		context.rect(0, 0, 250, 500);
+		context.strokeStyle = 'black';
+		context.lineWidth = 2;
 	    context.stroke();
 	}
 };
