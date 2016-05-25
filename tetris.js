@@ -1,7 +1,7 @@
 var BLOCK_SIZE = 25;
 var GO_DOWN_INTERVAL = 35;
 var reverseMatrix = [[0, -1], [1, 0]];
-var colorMap = ['', 'purple', 'yellow', '00FFFF', 'orange', 'blue', 'green', 'red', 'brown'];
+var colorMap = ['', 'purple', 'yellow', 'grey', 'orange', 'blue', 'green', 'red', 'brown'];
 
 var shapes = {
    	t : {
@@ -33,10 +33,13 @@ var shapes = {
    		color: 7	
    	} ,
  };
+//Test for unique identifier
+ var id = 0;
 
 function Piece() {
 	this.position = null;
 	this.color = null;
+	this.id = id++;
 
 	this.rotate = function(pivot, point){
 		pivotVector = new Array();
@@ -277,4 +280,8 @@ function Output(context){
 	    context.stroke();
 	}
 };
+//Utils
+function clone(entry){
+	return JSON.parse(JSON.stringify(entry));
+}
 

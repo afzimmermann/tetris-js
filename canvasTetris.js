@@ -1,6 +1,6 @@
 var allGames = new Array();
 var timeElapsed = 0;
-
+var endGame = false;
 function TetrisGame(outputName, playerName) {
   this.canvas  = document.getElementById(outputName);
   this.context = this.canvas.getContext('2d');
@@ -20,7 +20,6 @@ window.requestAnimFrame = (function(callback) {
 })();
 
 function animate(allGames) {
-    var endGame = false;
     for(var i = 0; i < allGames.length; i++){
        var tetrisGame = allGames[i];
 
