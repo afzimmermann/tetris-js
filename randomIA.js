@@ -7,9 +7,17 @@ var RandomIA = function(){
 	var nextMove = true;
 	var pieceCount = 0;
 	var piecePosition = null;
+	var rotation = null;
 	this.play = function(){
 		var hasMoved = false;
 		if(piecePosition && piecePosition.position != iaGame.piece.position){
+			//Lets rotate
+			if(rotation && rotation >0)
+			{
+				iaGame.move('TURN');
+				hasMoved = true;
+				rotation--;
+			}
 			//First move piece on X AXIS.
 			var xAxis = iaGame.piece.position[0][0] - piecePosition.position[0][0];
 			if(xAxis > 0){
@@ -31,7 +39,9 @@ var RandomIA = function(){
 			var pieceToMove = pieceCount == 0 ? actualPiece : nextPiece;
 			pieceCount++;
 			//Means the piece has changed... Time to get new Piece Position!
-			piecePosition = this.findBestPiecePosition(pieceToMove);
+			var pieceWithRotation = this.findBestPiecePosition(pieceToMove);
+			piecePosition = pieceWithRotation.piece;
+			rotation = pieceWithRotation.rotation;
 			actualPiece = clone(iaGame.piece);
 			nextPiece = clone(iaGame.nextPiece);
 		}
@@ -66,44 +76,54 @@ var RandomIA = function(){
 		var finalPiecePosition = null;
 		var mostPoints = 0;
 		var bestGrid = null;
+		var rotate = 0;
 		//Clone grid
 		var grid = JSON.parse(JSON.stringify(iaGame.grid));
-		// I need to try to put piece on all lower available positions (without spinning first).
-		var fakePiece = clone(pieceToMove);
-		fakePiece = this.moveToXPosition(fakePiece, -5);
-		for (var xPosition =0; xPosition <=9; xPosition++){//TODO Why so much cloning?? 
-			var totalPoints = 0;
-			fakePiece = this.moveToXPosition(fakePiece, 1);
-			var yPosition = 21;
-			var piecePosition = this.moveToYPosition(clone(fakePiece), yPosition);
-			while(this.detectColision(piecePosition.position, grid) && yPosition >0){
-				yPosition--;
-				piecePosition = this.moveToYPosition(clone(fakePiece), yPosition);
-			}
-			if(yPosition == 0){
-				console.log("xPosition useless: "+xPosition);
-				continue; //Useless to continue when I can't put the piece anywhere... let's go to next X
-			}
-			var gridWithPiece = clone(grid);
-			gridWithPiece = this.addPieceToGrid(gridWithPiece, piecePosition);
-			for (var x = 0; x <= 9; x++) {
-				for (var y = 0; y <= 21; y++) {
-					if(gridWithPiece[x][y] != 0){
-						totalPoints = totalPoints + (y);
+		var originalPiece = clone(pieceToMove);
+		for(var r=0; r<4; r++){
+		  console.log("rotation is r: "+r); 
+			fakePiece = r == 0 ? clone(originalPiece) : clone(doRotate(originalPiece));
+			fakePiece = this.moveToXPosition(fakePiece, -5);
+			for (var xPosition =0; xPosition <=9; xPosition++){//TODO Why so much cloning?? 
+				var totalPoints = 0;
+				fakePiece = this.moveToXPosition(fakePiece, 1);
+				var yPosition = 21;
+				var piecePosition = this.moveToYPosition(clone(fakePiece), yPosition);
+				while(this.detectColision(piecePosition.position, grid) && yPosition >0){
+					yPosition--;
+					piecePosition = this.moveToYPosition(clone(fakePiece), yPosition);
+				}
+				if(yPosition == 0){
+					console.log("xPosition useless: "+xPosition);
+					continue; //Useless to continue when I can't put the piece anywhere... let's go to next X
+				}
+				var gridWithPiece = clone(grid);
+				gridWithPiece = this.addPieceToGrid(gridWithPiece, piecePosition);
+				for (var x = 0; x <= 9; x++) {
+					for (var y = 0; y <= 21; y++) {
+						if(gridWithPiece[x][y] != 0){
+							totalPoints = totalPoints + (y);
+						};
 					};
 				};
-			};
-			console.log('totalPoints: '+totalPoints);
-			this.drawConsoleGrid(gridWithPiece);
+				console.log('totalPoints: '+totalPoints);
 
-			if(mostPoints < totalPoints){
-				mostPoints = totalPoints;
-				bestGrid = gridWithPiece;
-				finalPiecePosition = clone(piecePosition);
+				if(mostPoints < totalPoints){
+					mostPoints = totalPoints;
+					bestGrid = gridWithPiece;
+					rotate = r;
+					finalPiecePosition = clone(piecePosition);
+					this.drawConsoleGrid(gridWithPiece);
+				}
 			}
 		}
-	//	this.drawConsoleGrid(bestGrid);
-		return finalPiecePosition;
+
+		//	this.drawConsoleGrid(bestGrid);
+		var pieceWithRotation = {
+			rotation: rotate,
+			piece : finalPiecePosition
+		};
+		return pieceWithRotation;
 	};
 
 	this.drawConsoleGrid= function(grid){
